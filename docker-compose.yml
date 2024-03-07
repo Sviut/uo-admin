@@ -18,6 +18,8 @@ services:
       context: .
     container_name: go_app_container
     restart: always
+    environment:
+      - DB_HOST=postgres
     ports:
       - "8080:8080"
     depends_on:

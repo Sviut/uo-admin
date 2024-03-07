@@ -15,7 +15,7 @@ var db *gorm.DB
 func initDB() {
 	dbHost := os.Getenv("DB_HOST")
 	if dbHost == "" {
-		dbHost = "postgres"
+		dbHost = "localhost"
 	}
 
 	dsn := fmt.Sprintf("host=%s user=root password=root dbname=postgres port=5432 sslmode=disable", dbHost)
