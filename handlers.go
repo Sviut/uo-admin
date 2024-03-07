@@ -52,7 +52,7 @@ func getDeliveriesHandler(c *gin.Context) {
 
 	response := make([]map[string]interface{}, 0)
 	for _, delivery := range deliveries {
-		dateTimeStr := delivery.DeliveryTimestamp.Format("1999")
+		dateTimeStr := delivery.DeliveryTimestamp
 		response = append(response, map[string]interface{}{
 			"dateTime": dateTimeStr,
 			"ores": []map[string]int{
