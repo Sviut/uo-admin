@@ -22,14 +22,13 @@ func loadEnvVariables() {
 
 func connectDB() {
 	dbHost := os.Getenv("DB_HOST")
-	pgUser := os.Getenv("POSTGRES_USER")
 	pgPass := os.Getenv("POSTGRES_PASSWORD")
 
-	if dbHost == "" || pgUser == "" || pgPass == "" {
+	if dbHost == "" || pgPass == "" {
 		log.Fatal("One or more required environment variables are not set")
 	}
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=postgres port=5432 sslmode=disable", dbHost, pgUser, pgPass)
+	dsn := fmt.Sprintf("host=%s user=postgres password=%s dbname=postgres port=5432 sslmode=disable", dbHost, pgPass)
 
 	var err error
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
