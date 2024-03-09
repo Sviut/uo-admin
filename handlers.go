@@ -2,7 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-echarts/go-echarts/v2/charts"
+	"github.com/go-echarts/go-echarts/v2/opts"
+	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -50,16 +54,50 @@ func getDeliveriesHandler(c *gin.Context) {
 		return
 	}
 
-	response := make([]map[string]interface{}, 0)
-	for _, delivery := range deliveries {
-		dateTimeStr := delivery.DeliveryTimestamp
-		response = append(response, map[string]interface{}{
-			"dateTime": dateTimeStr,
-			"ores": []map[string]int{
-				{delivery.Color: delivery.Quantity},
-			},
-		})
+	timestampSet := make(map[string]bool)
+	for _, d := range deliveries {
+		timestamp := d.DeliveryTimestamp.Format("02 15:04")
+		timestampSet[timestamp] = true
 	}
 
-	c.JSON(http.StatusOK, response)
+	var timestamps []string
+	for timestamp := range timestampSet {
+		timestamps = append(timestamps, timestamp)
+	}
+	sort.Strings(timestamps)
+
+	// Подготовка данных для графика
+	colorDataMap := make(map[string][]opts.LineData)
+	for _, d := range deliveries {
+		if _, ok := colorDataMap[d.Color]; !ok {
+			colorDataMap[d.Color] = make([]opts.LineData, len(timestamps))
+			for i := range colorDataMap[d.Color] {
+				colorDataMap[d.Color][i] = opts.LineData{Value: 0} // Инициализация нулями
+			}
+		}
+		timestampIndex := sort.SearchStrings(timestamps, d.DeliveryTimestamp.Format("02 15:04"))
+		colorDataMap[d.Color][timestampIndex] = opts.LineData{Value: d.Quantity}
+	}
+
+	// Создание графика
+	lineChart := charts.NewLine()
+	lineChart.SetGlobalOptions(
+		charts.WithTitleOpts(opts.Title{Title: "Mining Statistics"}),
+		charts.WithLegendOpts(opts.Legend{Show: true}),
+		charts.WithYAxisOpts(opts.YAxis{Type: "value"}),
+		charts.WithTooltipOpts(opts.Tooltip{Show: true, Trigger: "axis"}),
+	)
+	lineChart.SetXAxis(timestamps)
+
+	for color, data := range colorDataMap {
+		lineChart.AddSeries(color, data)
+	}
+
+	c.Header("Content-Type", "text/html")
+	err := lineChart.Render(c.Writer)
+	if err != nil {
+		log.Printf("Failed to render chart: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to render chart"})
+		return
+	}
 }
