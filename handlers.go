@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/opts"
-	"log"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -48,7 +48,11 @@ func getDeliveriesHandler(c *gin.Context) {
 	sevenDaysAgo := time.Now().AddDate(0, 0, -7)
 
 	var deliveries []OreDelivery
-	result := db.Where("delivery_timestamp >= ?", sevenDaysAgo).Find(&deliveries)
+	result := db.
+		Not("color = ?", "Iron Ore").
+		Where("delivery_timestamp >= ?", sevenDaysAgo).
+		Find(&deliveries)
+
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query delivery information"})
 		return
@@ -83,7 +87,7 @@ func getDeliveriesHandler(c *gin.Context) {
 	lineChart := charts.NewLine()
 	lineChart.SetGlobalOptions(
 		charts.WithTitleOpts(opts.Title{Title: "Mining Statistics"}),
-		charts.WithLegendOpts(opts.Legend{Show: true}),
+		charts.WithLegendOpts(opts.Legend{Show: true, Bottom: "0"}),
 		charts.WithYAxisOpts(opts.YAxis{Type: "value"}),
 		charts.WithTooltipOpts(opts.Tooltip{Show: true, Trigger: "axis"}),
 	)
@@ -93,11 +97,15 @@ func getDeliveriesHandler(c *gin.Context) {
 		lineChart.AddSeries(color, data)
 	}
 
+	css := `<style>
+                .container {
+                    margin-top: 80px;
+                }
+            </style>`
+
+	var b strings.Builder
+	lineChart.Render(&b)
+
 	c.Header("Content-Type", "text/html")
-	err := lineChart.Render(c.Writer)
-	if err != nil {
-		log.Printf("Failed to render chart: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to render chart"})
-		return
-	}
+	c.Writer.Write([]byte(css + "<div class='container'>" + b.String() + "</div>"))
 }
