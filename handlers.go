@@ -86,8 +86,7 @@ func getDeliveriesHandler(c *gin.Context) {
 	// Создание графика
 	lineChart := charts.NewLine()
 	lineChart.SetGlobalOptions(
-		charts.WithTitleOpts(opts.Title{Title: "Mining Statistics"}),
-		charts.WithLegendOpts(opts.Legend{Show: true, Bottom: "0"}),
+		charts.WithLegendOpts(opts.Legend{Show: true, Height: "400"}),
 		charts.WithYAxisOpts(opts.YAxis{Type: "value"}),
 		charts.WithTooltipOpts(opts.Tooltip{Show: true, Trigger: "axis"}),
 	)
@@ -98,8 +97,8 @@ func getDeliveriesHandler(c *gin.Context) {
 	}
 
 	css := `<style>
-                .container {
-                    margin-top: 80px;
+                .charts {
+                    margin-top: 160px;
                 }
             </style>`
 
@@ -107,5 +106,5 @@ func getDeliveriesHandler(c *gin.Context) {
 	lineChart.Render(&b)
 
 	c.Header("Content-Type", "text/html")
-	c.Writer.Write([]byte(css + "<div class='container'>" + b.String() + "</div>"))
+	c.Writer.Write([]byte(css + "<div class='charts'>" + b.String() + "</div>"))
 }
