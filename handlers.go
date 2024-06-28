@@ -83,7 +83,7 @@ func getDeliveriesHandler(c *gin.Context) {
 		colorDataMap[d.Color][timestampIndex] = opts.LineData{Value: d.Quantity}
 	}
 
-	// Создание графика
+	// Создание графика 1
 	lineChart := charts.NewLine()
 	lineChart.SetGlobalOptions(
 		charts.WithLegendOpts(opts.Legend{Show: true, Height: "400"}),
